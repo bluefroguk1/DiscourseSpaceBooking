@@ -1,0 +1,8 @@
+{
+    "name": "SLMS Space Booking",
+    "component": true,
+    "about_url": "https://github.com/southlondonmakerspace/DiscourseSpaceBooking/blob/main/README.md",
+    "license_url": "https://github.com/southlondonmakerspace/DiscourseSpaceBooking/blob/main/LICENSE",
+     "assets": {
+     }
+}
