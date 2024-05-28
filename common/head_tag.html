@@ -14,7 +14,7 @@ give the user the option to book "around" an existing session
         <label>Hours: <select name="space-booking-hours"><option>0.5</option><option>1</option><option>1.5</option><option>2</option><option>2.5</option><option>3</option><option>3.5</option><option>4</option><option>4.5</option><option>5</option><option>5.5</option><option>6</option><option>6.5</option><option>7</option><option>7.5</option><option>8</option><option>8.5</option><option>9</option><option>9.5</option><option>10</option><option>10.5</option><option>11</option><option>11.5</option><option>12</option></select></label>
         <!-- <label>Tool: <select name="space-booking-tool"><option>None</option><option>Laser</option></select></label> -->
         
-        <button class="btn btn-primary book" disabled>Book</button>
+        <li><button class="btn btn-primary book" disabled>Book</button></li>
     {{/d-modal-body}}
     </script>
     
@@ -36,7 +36,7 @@ give the user the option to book "around" an existing session
           tagName: "button.btn.btn-primary",
         
           html() {
-            return "Book the space";
+            return "Host";
           },
         
           click() {
@@ -117,7 +117,7 @@ give the user the option to book "around" an existing session
                 }
             });
             //no async in babel
-            const cal_promise = fetch('/calendar.json')
+            const cal_promise = fetch('/c/space-bookings/l/calendar.json')
                 .then( r => r.json())
                 .then( r => {
                     topics = r.topic_list.topics;
