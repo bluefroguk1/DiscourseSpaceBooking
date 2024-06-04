@@ -107,7 +107,7 @@ give the user the option to book "around" an existing session
                 {
                      ajax('/posts', { type: "POST", data: {
                         raw: template.replace('**Host**:  @membername', '**Host**:  @'+user.username),
-                        title: '- '+end.slice(-5)+' @'+user.username,
+                        title: '- '+end.slice(-5)+' Space Open',
                         category: space_booking_category,
                         "event[timezone]":"",
                         "event[all_day]":false,
