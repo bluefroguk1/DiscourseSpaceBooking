@@ -1,60 +1,28 @@
-<!--
-TODO
-MAKE SURE NON ADMINS CAN LOAD /c/space-bookings/find_by_slug.json
-make the hour selector not exceed midnight for the given datetime
-enable the tool selector and populate the template based on it
-x add a loading icon
-handle timezones (the existing calendar extension is not stellar)
-give the user the option to book "around" an existing session
--->
+<script type="text/x-handlebars" data-template-name="components/space-booking-modal">
+    <div class="space-booking-modal">
+        <input type="datetime-local" name="space-booking-start" class="start-input" />
+        <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
+        <button class="book btn btn-primary">Book</button>
+    </div>
+</script>
+
 
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
     const { ajax } = require("discourse/lib/ajax");
-    const { showModal } = require("discourse/lib/show-modal");
+    const { showModal } = require("discourse/lib/show-modal").default;
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
     const space_booking_category = 74; // discourse category for space booking posts
-    
+
     const currentLocale = I18n.currentLocale();
     I18n.translations[currentLocale].js.space_booking_modal_title = "Book the space";
-
-    withPluginApi("0.8.18", api => {
-        const user = api.getCurrentUser();
-        if (user.groups.some(g => g.id === keyholder_group)) {
-            api.createWidget("space-booking-button", {
-                tagName: "button.btn.btn-primary",
-                html() {
-                    return "Host";
-                },
-                click() {
-                    console.log("Host button clicked");
-                    showSpaceBookingModal();
-                }
-            });
-
-            api.decorateWidget('header-icons:before', helper => {
-                return [helper.attach("space-booking-button")];
-            });
-
-            api.onPageChange(() => {
-                if (user.groups.some(g => g.id === keyholder_group)) {
-                    if (!document.querySelector(".space-booking-button")) {
-                        api.decorateWidget('header-icons:before', helper => {
-                            return helper.attach("space-booking-button");
-                        });
-                    }
-                }
-            });
-        }
-    });
 
     function showSpaceBookingModal() {
         console.log("Opening Space Booking Modal");
 
-        const modalContent = document.createElement('div');
-        modalContent.innerHTML = `
+        const modalContent = `
             <div class="space-booking-modal">
                 <input type="datetime-local" name="space-booking-start" class="start-input" />
                 <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
@@ -62,9 +30,14 @@ give the user the option to book "around" an existing session
             </div>
         `;
 
-        const start_input = modalContent.querySelector('.start-input');
-        const hours_input = modalContent.querySelector('.hours-input');
-        const book_btn = modalContent.querySelector('.book');
+        const modal = showModal("space-booking-modal", {
+            title: I18n.t("js.space_booking_modal_title"),
+            contents: modalContent
+        });
+
+        const start_input = modal.querySelector('.start-input');
+        const hours_input = modal.querySelector('.hours-input');
+        const book_btn = modal.querySelector('.book');
 
         let topics;
         let template;
@@ -139,18 +112,35 @@ give the user the option to book "around" an existing session
             spinner.remove();
             console.log("Data loaded and modal ready");
         });
-
-        showModal("space-booking-modal", {
-            title: I18n.t("js.space_booking_modal_title"),
-            contents: modalContent
-        });
     }
-</script>
 
-<script type="text/x-handlebars" data-template-name="components/space-booking-modal">
-    <div class="space-booking-modal">
-        <input type="datetime-local" name="space-booking-start" class="start-input" />
-        <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
-        <button class="book btn btn-primary">Book</button>
-    </div>
+    withPluginApi("0.8.18", api => {
+        const user = api.getCurrentUser();
+        if (user.groups.some(g => g.id === keyholder_group)) {
+            api.createWidget("space-booking-button", {
+                tagName: "button.btn.btn-primary",
+                html() {
+                    return "Host";
+                },
+                click() {
+                    console.log("Host button clicked");
+                    showSpaceBookingModal();
+                }
+            });
+
+            api.decorateWidget('header-icons:before', helper => {
+                return [helper.attach("space-booking-button")];
+            });
+
+            api.onPageChange(() => {
+                if (user.groups.some(g => g.id === keyholder_group)) {
+                    if (!document.querySelector(".space-booking-button")) {
+                        api.decorateWidget('header-icons:before', helper => {
+                            return helper.attach("space-booking-button");
+                        });
+                    }
+                }
+            });
+        }
+    });
 </script>
