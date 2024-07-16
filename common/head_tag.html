@@ -9,11 +9,11 @@ give the user the option to book "around" an existing session
 -->
     
 <script type="text/discourse-plugin" version="0.8.18">
-    import { iconHTML } from "discourse-common/lib/icon-library";
-    import { showModal } from "discourse/lib/show-modal";
-    import { ajax } from "discourse/lib/ajax";
-    import { getOwner } from "discourse-common/lib/get-owner";
-    import { withPluginApi } from "discourse/lib/plugin-api";
+    const { iconHTML } = require("discourse-common/lib/icon-library");
+    const showModal = require("discourse/lib/show-modal").default;
+    const { ajax } = require("discourse/lib/ajax");
+    const { getOwner } = require("discourse-common/lib/get-owner");
+    const { withPluginApi } = require("discourse/lib/plugin-api");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
     const space_booking_category = 74; // discourse category for space booking posts
