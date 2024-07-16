@@ -11,6 +11,7 @@ give the user the option to book "around" an existing session
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
     const { ajax } = require("discourse/lib/ajax");
+    const { showModal } = require("discourse/lib/show-modal");
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
@@ -29,7 +30,7 @@ give the user the option to book "around" an existing session
                 },
                 click() {
                     console.log("Host button clicked");
-                    showSpaceBookingModal(api);
+                    showSpaceBookingModal();
                 }
             });
 
@@ -49,7 +50,7 @@ give the user the option to book "around" an existing session
         }
     });
 
-    function showSpaceBookingModal(api) {
+    function showSpaceBookingModal() {
         console.log("Opening Space Booking Modal");
 
         const modalContent = document.createElement('div');
@@ -139,7 +140,7 @@ give the user the option to book "around" an existing session
             console.log("Data loaded and modal ready");
         });
 
-        api.showModal("space-booking-modal", {
+        showModal("space-booking-modal", {
             title: I18n.t("js.space_booking_modal_title"),
             contents: modalContent
         });
