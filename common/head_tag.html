@@ -30,7 +30,7 @@ give the user the option to book "around" an existing session
                 },
                 click() {
                     console.log("Host button clicked");
-                    showSpaceBookingModal();
+                    showSpaceBookingModal(api);
                 }
             });
 
@@ -50,7 +50,7 @@ give the user the option to book "around" an existing session
         }
     });
 
-    function showSpaceBookingModal() {
+    function showSpaceBookingModal(api) {
         console.log("Opening Space Booking Modal");
 
         const modalContent = document.createElement('div');
@@ -140,9 +140,9 @@ give the user the option to book "around" an existing session
             console.log("Data loaded and modal ready");
         });
 
-        showModal("space-booking-modal", {
+        api.showModal("space-booking-modal", {
             title: I18n.t("js.space_booking_modal_title"),
-            contents: modalContent
+            body: modalContent
         });
     }
 </script>
