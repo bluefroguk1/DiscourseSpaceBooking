@@ -10,6 +10,7 @@ give the user the option to book "around" an existing session
 
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
+    const { showModal } = require("discourse/lib/show-modal");
     const { ajax } = require("discourse/lib/ajax");
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
@@ -19,132 +20,129 @@ give the user the option to book "around" an existing session
     const currentLocale = I18n.currentLocale();
     I18n.translations[currentLocale].js.space_booking_modal_title = "Book the space";
 
-    api.modifyClass("component:site-header", {
-        pluginId: "space-booking",
-        actions: {
-            showSpaceBookingModal() {
-                this.showModal("space-booking-modal");
-            }
-        }
-    });
-
-    api.createWidget("space-booking-button", {
-        tagName: "button.btn.btn-primary",
-        html() {
-            return "Host";
-        },
-        click() {
-            this.sendWidgetAction("showSpaceBookingModal");
-        }
-    });
-
-    api.decorateWidget("header-icons:before", helper => {
-        return helper.attach("space-booking-button");
-    });
-
-    api.registerModalComponent("space-booking-modal", {
-        templateName: "space-booking-modal",
-        title: I18n.t("js.space_booking_modal_title"),
-        actions: {
-            didInsertElement() {
-                const modal_body = this.element;
-                const start_input = modal_body.querySelector('.start-input');
-                const hours_input = modal_body.querySelector('.hours-input');
-                const book_btn = modal_body.querySelector('.book');
-
-                let topics;
-                let template;
-
-                const local_dt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-                const d = new Date();
-                d.setSeconds(0, 0);
-                d.setMinutes(Math.ceil(d.getMinutes() / 30) * 30); // "round" up to the soonest half hour
-                start_input.value = local_dt(d);
-
-                book_btn.innerHTML += `&nbsp;${iconHTML('spinner')}`;
-                const spinner = book_btn.querySelector('.fa');
-                spinner.classList.add('fa-spin');
-
-                book_btn.addEventListener('click', () => {
-                    console.log("Book button clicked");
-
-                    const start = start_input.value;
-                    const end_date = new Date(start);
-                    end_date.setMinutes(end_date.getMinutes() + hours_input.value * 60);
-                    const end = local_dt(end_date);
-
-                    const slots = [];
-                    const overlap = topics.filter(e => {
-                        if (!e.event.end) {
-                            return false;
-                        }
-                        const e_start = e.event.start.slice(0, 16);
-                        const e_end = e.event.end.slice(0, 16);
-                        if (e_end <= start || e_start >= end) {
-                            return false;
-                        }
-                        slots.push(`${e_start.slice(-5)}-${e_end.slice(-5)}`);
-                        return true;
-                    });
-                    if (overlap.length) {
-                        const c = overlap.length;
-                        const msg = (c === 1 ?
-                            `There is one overlapping session with you: ${slots[0]}. Would you like to go to it?` : 
-                            `There are ${c} overlapping sessions with you: ${slots.join(', ')}. Would you like to go to the first one?`
-                        );
-                        if (confirm(msg)) {
-                            window.location = `/t/${overlap[0].id}`;
-                        }
-                    } else {
-                        ajax('/posts', { type: "POST", data: {
-                            raw: template.replace('**Host**:  @membername', `**Host**:  @${user.username}`),
-                            title: `- ${end.slice(-5)} Space Open`,
-                            category: space_booking_category,
-                            "event[timezone]": "",
-                            "event[all_day]": false,
-                            "event[start]": `${start}:00.000Z`,
-                            "event[end]": `${end}:00.000Z`,
-                        }}).then(response => { 
-                            window.location = `/p/${response.id}`;
-                        });
-                    }
-                });
-
-                const cal_promise = fetch('/c/space-bookings/l/calendar.json')
-                    .then(r => r.json())
-                    .then(r => {
-                        topics = r.topic_list.topics;
-                    });
-                const template_promise = fetch('/c/space-bookings/find_by_slug.json')
-                    .then(r => r.json())
-                    .then(r => {
-                        template = r.category.topic_template;
-                    });
-                Promise.all([cal_promise, template_promise]).then(() => {
-                    book_btn.disabled = false;
-                    spinner.remove();
-                    console.log("Data loaded and modal ready");
-                });
-            }
-        }
-    });
-
-    api.onPageChange(() => {
+    withPluginApi("0.8.18", api => {
         const user = api.getCurrentUser();
         if (user.groups.some(g => g.id === keyholder_group)) {
-            if (!document.querySelector(".space-booking-button")) {
-                api.decorateWidget('header-icons:before', helper => {
-                    return helper.attach("space-booking-button");
-                });
-            }
+            api.createWidget("space-booking-button", {
+                tagName: "button.btn.btn-primary",
+                html() {
+                    return "Host";
+                },
+                click() {
+                    console.log("Host button clicked");
+                    showSpaceBookingModal();
+                }
+            });
+
+            api.decorateWidget('header-icons:before', helper => {
+                return [helper.attach("space-booking-button")];
+            });
+
+            api.onPageChange(() => {
+                if (user.groups.some(g => g.id === keyholder_group)) {
+                    if (!document.querySelector(".space-booking-button")) {
+                        api.decorateWidget('header-icons:before', helper => {
+                            return helper.attach("space-booking-button");
+                        });
+                    }
+                }
+            });
         }
     });
-</script>
 
-<script type="text/x-handlebars" data-template-name="space-booking-modal">
-    <div class="space-booking-modal">
-        <input type="datetime-local" name="space-booking-start" class="start-input" />
-        <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
-        <button class="book btn btn-primary">Book</button>
-    </div>
+    function showSpaceBookingModal() {
+        console.log("Opening Space Booking Modal");
+
+        const modalContent = document.createElement('div');
+        modalContent.innerHTML = `
+            <div class="space-booking-modal">
+                <input type="datetime-local" name="space-booking-start" class="start-input" />
+                <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
+                <button class="book btn btn-primary">Book</button>
+            </div>
+        `;
+
+        const start_input = modalContent.querySelector('.start-input');
+        const hours_input = modalContent.querySelector('.hours-input');
+        const book_btn = modalContent.querySelector('.book');
+
+        let topics;
+        let template;
+
+        const local_dt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        const d = new Date();
+        d.setSeconds(0, 0);
+        d.setMinutes(Math.ceil(d.getMinutes() / 30) * 30); // "round" up to the soonest half hour
+        start_input.value = local_dt(d);
+
+        book_btn.innerHTML += `&nbsp;${iconHTML('spinner')}`;
+        const spinner = book_btn.querySelector('.fa');
+        spinner.classList.add('fa-spin');
+
+        book_btn.addEventListener('click', () => {
+            console.log("Book button clicked");
+
+            const start = start_input.value;
+            const end_date = new Date(start);
+            end_date.setMinutes(end_date.getMinutes() + hours_input.value * 60);
+            const end = local_dt(end_date);
+
+            const slots = [];
+            const overlap = topics.filter(e => {
+                if (!e.event.end) {
+                    return false;
+                }
+                const e_start = e.event.start.slice(0, 16);
+                const e_end = e.event.end.slice(0, 16);
+                if (e_end <= start || e_start >= end) {
+                    return false;
+                }
+                slots.push(`${e_start.slice(-5)}-${e_end.slice(-5)}`);
+                return true;
+            });
+            if (overlap.length) {
+                const c = overlap.length;
+                const msg = (c === 1 ?
+                    `There is one overlapping session with you: ${slots[0]}. Would you like to go to it?` : 
+                    `There are ${c} overlapping sessions with you: ${slots.join(', ')}. Would you like to go to the first one?`
+                );
+                if (confirm(msg)) {
+                    window.location = `/t/${overlap[0].id}`;
+                }
+            } else {
+                ajax('/posts', { type: "POST", data: {
+                    raw: template.replace('**Host**:  @membername', `**Host**:  @${user.username}`),
+                    title: `- ${end.slice(-5)} Space Open`,
+                    category: space_booking_category,
+                    "event[timezone]": "",
+                    "event[all_day]": false,
+                    "event[start]": `${start}:00.000Z`,
+                    "event[end]": `${end}:00.000Z`,
+                }}).then(response => { 
+                    window.location = `/p/${response.id}`;
+                });
+            }
+        });
+
+        const cal_promise = fetch('/c/space-bookings/l/calendar.json')
+            .then(r => r.json())
+            .then(r => {
+                topics = r.topic_list.topics;
+            });
+        const template_promise = fetch('/c/space-bookings/find_by_slug.json')
+            .then(r => r.json())
+            .then(r => {
+                template = r.category.topic_template;
+            });
+        Promise.all([cal_promise, template_promise]).then(() => {
+            book_btn.disabled = false;
+            spinner.remove();
+            console.log("Data loaded and modal ready");
+        });
+
+        showModal("space-booking-modal", {
+            title: I18n.t("js.space_booking_modal_title"),
+            contents: modalContent
+        });
+    }
 </script>
