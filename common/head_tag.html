@@ -14,12 +14,23 @@ give the user the option to book "around" an existing session
     const { ajax } = require("discourse/lib/ajax");
     const { getOwner } = require("discourse-common/lib/get-owner");
     const { withPluginApi } = require("discourse/lib/plugin-api");
+    const { modal } = require("discourse/lib/modal");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
     const space_booking_category = 74; // discourse category for space booking posts
     
     const currentLocale = I18n.currentLocale();
     I18n.translations[currentLocale].js.space_booking_modal_title = "Book the space";
+
+    modal("spaceBookingModal", {
+      title: "space_booking_modal_title",
+      contents: "<div class='space-booking-modal'><input type='datetime-local' name='space-booking-start'/><input type='number' name='space-booking-hours'/><button class='book'>Book</button></div>",
+      actions: {
+        book() {
+          // Booking logic
+        }
+      }
+    });
     
     withPluginApi("0.8.18", api => {
         const user = api.getCurrentUser();
