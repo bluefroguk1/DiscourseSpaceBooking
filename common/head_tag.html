@@ -21,16 +21,22 @@ give the user the option to book "around" an existing session
     I18n.translations[currentLocale].js.space_booking_modal_title = "Book the space";
 
     function showSpaceBookingModal() {
+        console.log("Opening Space Booking Modal");
+
         showModal("spaceBookingModal", {
             title: I18n.t("js.space_booking_modal_title"),
-            html: `
-                <div class="space-booking-modal">
-                    <input type="datetime-local" name="space-booking-start" class="start-input" />
-                    <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
-                    <button class="book btn btn-primary">Book</button>
-                </div>
-            `,
+            html() {
+                return `
+                    <div class="space-booking-modal">
+                        <input type="datetime-local" name="space-booking-start" class="start-input" />
+                        <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
+                        <button class="book btn btn-primary">Book</button>
+                    </div>
+                `;
+            },
             didInsertElement() {
+                console.log("Modal element inserted");
+
                 const modal_body = this.element;
                 const start_input = modal_body.querySelector('.start-input');
                 const hours_input = modal_body.querySelector('.hours-input');
@@ -50,6 +56,8 @@ give the user the option to book "around" an existing session
                 spinner.classList.add('fa-spin');
 
                 book_btn.addEventListener('click', () => {
+                    console.log("Book button clicked");
+
                     const start = start_input.value;
                     const end_date = new Date(start);
                     end_date.setMinutes(end_date.getMinutes() + hours_input.value * 60);
@@ -105,6 +113,7 @@ give the user the option to book "around" an existing session
                 Promise.all([cal_promise, template_promise]).then(() => {
                     book_btn.disabled = false;
                     spinner.remove();
+                    console.log("Data loaded and modal ready");
                 });
             }
         });
@@ -119,6 +128,7 @@ give the user the option to book "around" an existing session
                     return "Host";
                 },
                 click() {
+                    console.log("Host button clicked");
                     showSpaceBookingModal();
                 }
             });
