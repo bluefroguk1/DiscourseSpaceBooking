@@ -10,7 +10,6 @@ give the user the option to book "around" an existing session
 
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
-    const { showModal } = require("discourse/lib/show-modal");
     const { ajax } = require("discourse/lib/ajax");
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
@@ -30,7 +29,7 @@ give the user the option to book "around" an existing session
                 },
                 click() {
                     console.log("Host button clicked");
-                    showSpaceBookingModal(api);
+                    showSpaceBookingModal();
                 }
             });
 
@@ -50,7 +49,7 @@ give the user the option to book "around" an existing session
         }
     });
 
-    function showSpaceBookingModal(api) {
+    function showSpaceBookingModal() {
         console.log("Opening Space Booking Modal");
 
         const modalContent = document.createElement('div');
@@ -140,9 +139,17 @@ give the user the option to book "around" an existing session
             console.log("Data loaded and modal ready");
         });
 
-        api.showModal("space-booking-modal", {
+        showModal("space-booking-modal", {
             title: I18n.t("js.space_booking_modal_title"),
-            body: modalContent
+            contents: modalContent
         });
     }
+</script>
+
+<script type="text/x-handlebars" data-template-name="space-booking-modal">
+    <div class="space-booking-modal">
+        <input type="datetime-local" name="space-booking-start" class="start-input" />
+        <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1" />
+        <button class="book btn btn-primary">Book</button>
+    </div>
 </script>
