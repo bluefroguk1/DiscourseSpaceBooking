@@ -10,7 +10,7 @@ give the user the option to book "around" an existing session
 
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
-    const { showModal } = require("discourse/lib/show-modal");
+    const showModal = require("discourse/lib/show-modal").default;
     const { ajax } = require("discourse/lib/ajax");
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
