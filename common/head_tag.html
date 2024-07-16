@@ -1,7 +1,7 @@
 <script type="text/discourse-plugin" version="0.8.18">
     const { iconHTML } = require("discourse-common/lib/icon-library");
     const { ajax } = require("discourse/lib/ajax");
-    const { showModal } = require("discourse/lib/show-modal").default;
+    const showModal = require("discourse/lib/show-modal").default;
     const { withPluginApi } = require("discourse/lib/plugin-api");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
