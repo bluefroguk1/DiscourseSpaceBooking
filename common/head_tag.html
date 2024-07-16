@@ -14,7 +14,6 @@ give the user the option to book "around" an existing session
     const { ajax } = require("discourse/lib/ajax");
     const { getOwner } = require("discourse-common/lib/get-owner");
     const { withPluginApi } = require("discourse/lib/plugin-api");
-    const { modal } = require("discourse/lib/modal");
 
     const keyholder_group = 67; // discourse group to check to show "book the space" button
     const space_booking_category = 74; // discourse category for space booking posts
@@ -22,54 +21,34 @@ give the user the option to book "around" an existing session
     const currentLocale = I18n.currentLocale();
     I18n.translations[currentLocale].js.space_booking_modal_title = "Book the space";
 
-    modal("spaceBookingModal", {
-      title: "space_booking_modal_title",
-      contents: "<div class='space-booking-modal'><input type='datetime-local' name='space-booking-start'/><input type='number' name='space-booking-hours'/><button class='book'>Book</button></div>",
-      actions: {
-        book() {
-          // Booking logic
-        }
-      }
-    });
-    
-    withPluginApi("0.8.18", api => {
-        const user = api.getCurrentUser();
-        if (user.groups.filter(g => g.id == keyholder_group).length) {
-            api.createWidget("space-booking-button", {
-                tagName: "button.btn.btn-primary",
-                html() {
-                    return "Host";
-                },
-                click() {
-                    showModal("spaceBookingModal");
-                }
-            });
-    
-            api.decorateWidget('header-icons:before', (helper) => {
-                return [helper.attach("space-booking-button")];
-            });
-            
-            api.onAppEvent('modal:body-shown', msg => {
-                if (msg.title !== 'space_booking_modal_title') {
-                    return;
-                }
+    function defineSpaceBookingModal() {
+        const modalBody = `
+            <div class="space-booking-modal">
+                <input type="datetime-local" name="space-booking-start" class="start-input"/>
+                <input type="number" name="space-booking-hours" class="hours-input" min="1" max="24" value="1"/>
+                <button class="book btn btn-primary">Book</button>
+            </div>
+        `;
+
+        const actions = {
+            book() {
+                const start_input = document.querySelector('.space-booking-modal .start-input');
+                const hours_input = document.querySelector('.space-booking-modal .hours-input');
+                const book_btn = document.querySelector('.space-booking-modal .book');
+
+                let topics;
+                let template;
+
                 const local_dt = d => d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+'T'+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
-                
-                const modal_body = document.querySelector('.space-booking-modal');
                 const d = new Date();
                 d.setSeconds(0, 0);
                 d.setMinutes(Math.ceil(d.getMinutes() / 30) * 30); // "round" up to the soonest half hour
-                const start_input = modal_body.querySelector('[name="space-booking-start"]');
                 start_input.value = local_dt(d);
                 
-                const hours_input = modal_body.querySelector('[name="space-booking-hours"]');
-                const book_btn = modal_body.querySelector('.book');
-                
-                let topics;
-                let template;
                 book_btn.innerHTML += '&nbsp;' + iconHTML('spinner');
                 const spinner = book_btn.querySelector('.fa');
                 spinner.classList.add('fa-spin');
+
                 book_btn.addEventListener('click', () => {
                     const start = start_input.value;
                     const end_date = new Date(start);
@@ -127,6 +106,40 @@ give the user the option to book "around" an existing session
                     book_btn.disabled = false;
                     spinner.remove();
                 });
+            }
+        };
+
+        modal("spaceBookingModal", {
+            title: I18n.t("js.space_booking_modal_title"),
+            contents: modalBody,
+            actions
+        });
+    }
+    
+    withPluginApi("0.8.18", api => {
+        const user = api.getCurrentUser();
+        if (user.groups.filter(g => g.id == keyholder_group).length) {
+            defineSpaceBookingModal();
+
+            api.createWidget("space-booking-button", {
+                tagName: "button.btn.btn-primary",
+                html() {
+                    return "Host";
+                },
+                click() {
+                    showModal("spaceBookingModal");
+                }
+            });
+    
+            api.decorateWidget('header-icons:before', (helper) => {
+                return [helper.attach("space-booking-button")];
+            });
+            
+            api.onAppEvent('modal:body-shown', msg => {
+                if (msg.title !== I18n.t("js.space_booking_modal_title")) {
+                    return;
+                }
+                actions.book(); // Call the book action when the modal is shown
             });
         }
     });
